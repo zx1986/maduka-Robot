@@ -12,6 +12,7 @@ using System.IO;
 using System.Web;
 using System.Configuration;
 using Microsoft.Bot.Builder.Dialogs;
+using System.Net.HttpWebRequest;
 
 namespace maduka_Robot.Controllers
 {
@@ -30,6 +31,32 @@ namespace maduka_Robot.Controllers
                 // 處理回覆的內容
                 int length = (activity.Text ?? string.Empty).Length;
                 string strReply = $"你送入的文字是 {activity.Text} 這段文字長 {length} 個字元";
+
+                /* --- 定義抓網頁爬蟲抓資料 --- */
+
+                // 爬網頁
+                HttpWebRequest request = (HttpWebRequest)
+                WebRequest.Create("https://yahoo.com.tw");
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                Stream resStream = response.GetResponseStream();
+
+                // 讀資料
+                string tempString = null;
+                int    count      = 0;
+                do
+                {
+                  count = resStream.Read(buf, 0, buf.Length);
+                  if (count != 0)
+                  {
+                    sb.Append(tempString);
+                  }
+                }
+                while (count > 0); // any more data to read?
+
+                // 組合資料
+                strReply = tempString
+
+                /* --- end of 網頁爬蟲 --- */
 
                 /* ----------有用到LUIS才需要打開這些部份----------
                 string strLuisKey = ConfigurationManager.AppSettings["LUISAPIKey"].ToString();
@@ -59,7 +86,7 @@ namespace maduka_Robot.Controllers
                         strReply = $"您要詢問的航空公司:{strAir}，日期:{strDate}，相關服務是:{strService}。我馬上幫您找出資訊";
                         strReply += ".....這裡加上後續資料的呈現.....";
                     }
-                    
+
                     if (strIntent == "只是打招呼")
                     {
                         strReply = "您好，有什麼能幫得上忙的呢?";
